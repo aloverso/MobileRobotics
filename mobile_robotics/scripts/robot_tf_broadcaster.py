@@ -22,14 +22,14 @@ if __name__ == '__main__':
     rospy.spin()
 """
 if __name__ == '__main__':
-    rospy.init('robot_tf_broadcast')
+    rospy.init_node('robot_tf_broadcaster')
     rate = rospy.Rate(10)
 
     broadcaster = tf.TransformBroadcaster
 
     while not rospy.is_shutdown():
         broadcaster.sendTransform(
-            tf.StampedTransform(
+            
                 tf.Transform(tf.Quaternion(0, 0, 0, 1), tf.Vector3(0.1, 0.0, 0.2)),
-            rospy.Time.now(),"base_link", "base_laser"))
+            rospy.Time.now(),"base_link", "base_laser")
         r.sleep()

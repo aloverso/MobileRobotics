@@ -23,8 +23,8 @@ if __name__ == '__main__':
             print "no"
             continue
 
-        print "trans 0" + str(trans[0])
-        print "trans 1" + str(trans[1])
+        print "trans " + str(trans)
+        print "rotat " + str(rot)
         #angular = 4 * math.atan2(trans[1], trans[0])
         #linear = 0.5 * math.sqrt(trans[0] ** 2 + trans[1] ** 2)
         #cmd = geometry_msgs.msg.Twist()
