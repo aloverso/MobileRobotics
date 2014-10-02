@@ -22,7 +22,7 @@ if __name__ == '__main__':
     rospy.spin()
 """
 if __name__ == '__main__':
-    rospy.init('robot_tf_broadcaster')
+    rospy.init('robot_tf_broadcast')
     rate = rospy.Rate(10)
 
     broadcaster = tf.TransformBroadcaster

@@ -1,0 +1,12 @@
+<launch>
+  <arg name="use_sim_time" value="false"/>
+  <arg name="host"/>
+  <arg name="robotname" default=""/>
+  <include file="$(find neato_node)/launch/bringup_minimal.launch">
+	<arg name="host" value="$(arg host)"/>
+	<arg name="robotname" value="$(arg robotname)"/>
+  </include>
+  <include file="$(find gscam)/examples/raspi_nodelet.launch">
+	<arg name="host" value="$(arg host)"/>
+  </include>
+</launch>

@@ -16,9 +16,9 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         #print "running"
         print listener.getFrameStrings()
-        (trans,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
+        #(trans,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(1))
         try:
-            (trans,rot) = listener.lookupTransform('/odom', '/neato', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print "no"
             continue

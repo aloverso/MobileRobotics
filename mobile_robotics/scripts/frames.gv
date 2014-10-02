@@ -1,0 +1,4 @@
+digraph G {
+"base_link" -> "base_laser_link"[label="Broadcaster: /marco/laser_to_base\nAverage rate: 40.073 Hz\nMost recent transform: 1412100002.691 \nBuffer length: 4.916 sec\n"];
+"odom" -> "base_link"[label="Broadcaster: /marco/neato\nAverage rate: 10.200 Hz\nMost recent transform: 1412100002.492 \nBuffer length: 4.804 sec\n"];
+}

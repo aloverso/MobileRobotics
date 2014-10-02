@@ -1,0 +1,6 @@
+digraph G {
+"polo/base_link" -> "polo/base_laser_link"[label="Broadcaster: /polo/laser_to_base\nAverage rate: 20.142 Hz\nMost recent transform: 1412103494.905 \nBuffer length: 4.915 sec\n"];
+"polo/odom" -> "polo/base_link"[label="Broadcaster: /polo/neato\nAverage rate: 5.468 Hz\nMost recent transform: 1412103494.730 \nBuffer length: 4.755 sec\n"];
+"marco/base_link" -> "marco/base_laser_link"[label="Broadcaster: /marco/laser_to_base\nAverage rate: 20.142 Hz\nMost recent transform: 1412103494.895 \nBuffer length: 4.866 sec\n"];
+"marco/odom" -> "marco/base_link"[label="Broadcaster: /marco/neato\nAverage rate: 5.206 Hz\nMost recent transform: 1412103494.782 \nBuffer length: 4.802 sec\n"];
+}
