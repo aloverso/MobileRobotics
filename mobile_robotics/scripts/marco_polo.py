@@ -10,7 +10,7 @@ class Marco:
         self.robotname = "marco"
         self.listener = tf.TransformListener()
         self.broadcaster = tf.TransformBroadcaster()
-        self.polos = 
+        self.polo_names = polo_names
 
     def run(self):
         self.broadcaster.sendTransform(
@@ -31,14 +31,18 @@ class Marco:
 
     def call_marco(self):
         for polo_name in self.polo_names:
-            (trans,rot) = self.listener.lookupTransform(
-                "/%s/odom"%self.robotname, 
-                "/%s/base_link"%polo_name,
-                 rospy.Time(0))
-            radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
-            #if radius <
-            angular = 4 * math.atan2(trans[1], trans[0])
-            print angular
+            try:
+                (trans,rot) = self.listener.lookupTransform(
+                    "/%s/base_link"%self.robotname, 
+                    "/%s/base_link"%polo_name,
+                     rospy.Time(0))
+                radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
+                angular = 4 * math.atan2(trans[1], trans[0])
+                print angular
+            except (tf.LookupException, tf.ConnectivityException, 
+            tf.ExtrapolationException):
+                pass
+            
 
 # Polo needs to start directly to Marco's right 
 class Polo:
@@ -64,14 +68,13 @@ class Polo:
             pass
 
 if __name__ == '__main__':
-    rospy.init_node('marco_polo_robots')
+    rospy.init_node('marco_polo_bots')
 
     # polo_names = ["polo1", "polo2"]
     polo_names = ["polo"]
     marco = Marco(polo_names)
-    polos = [Polo(name) for name in polo_names]
+    polo = Polo("polo")
 
     while not rospy.is_shutdown():
         marco.run()
-        for polo in polos:
-            polo.run()
+        polo.run()
