@@ -10,7 +10,7 @@ class Marco:
         self.robotname = "marco"
         self.listener = tf.TransformListener()
         self.broadcaster = tf.TransformBroadcaster()
-        self.polos = 
+        self.polo_names = polo_names
 
     def run(self):
         self.broadcaster.sendTransform(
@@ -64,14 +64,13 @@ class Polo:
             pass
 
 if __name__ == '__main__':
-    rospy.init_node('marco_polo_robots')
+    rospy.init_node('marco_polo', anonymous=True)
 
     # polo_names = ["polo1", "polo2"]
     polo_names = ["polo"]
     marco = Marco(polo_names)
-    polos = [Polo(name) for name in polo_names]
+    polo = Polo("polo")
 
     while not rospy.is_shutdown():
         marco.run()
-        for polo in polos:
-            polo.run()
+        polo.run()
