@@ -1,4 +1,6 @@
 digraph G {
-"base_link" -> "base_laser_link"[label="Broadcaster: /marco/laser_to_base\nAverage rate: 40.073 Hz\nMost recent transform: 1412100002.691 \nBuffer length: 4.916 sec\n"];
-"odom" -> "base_link"[label="Broadcaster: /marco/neato\nAverage rate: 10.200 Hz\nMost recent transform: 1412100002.492 \nBuffer length: 4.804 sec\n"];
+"world" -> "marco/odom"[label="Broadcaster: /marco_polo_robots\nAverage rate: 1580.961 Hz\nMost recent transform: 1412293942.268 \nBuffer length: 4.987 sec\n"];
+"world" -> "polo/odom"[label="Broadcaster: /marco_polo_robots\nAverage rate: 1580.974 Hz\nMost recent transform: 1412293942.268 \nBuffer length: 4.987 sec\n"];
+"marco/odom" -> "marco/base_link"[label="Broadcaster: /marco/neato\nAverage rate: 5.208 Hz\nMost recent transform: 1412293942.021 \nBuffer length: 4.800 sec\n"];
+"marco/base_link" -> "marco/base_laser_link"[label="Broadcaster: /marco/laser_to_base\nAverage rate: 20.158 Hz\nMost recent transform: 1412293942.270 \nBuffer length: 4.911 sec\n"];
 }

@@ -9,6 +9,7 @@ if __name__ == '__main__':
     rospy.init_node('robot_tf_listener')
 
     listener = tf.TransformListener()
+    broadcaster = tf.TransformBroadcaster()
 
     #turtle_vel = rospy.Publisher('turtle2/cmd_vel', geometry_msgs.msg.Twist)
 
@@ -16,9 +17,14 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         #print "running"
         print listener.getFrameStrings()
+
+        broadcaster.sendTransform((0.33655, 0.0, 0.0), (0, 0, 0, 1),
+            rospy.Time.now(),"/world", "/marco/odom")
+
+
         #(trans,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(1))
         try:
-            (trans,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/world', '/marco/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print "no"
             continue
