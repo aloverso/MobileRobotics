@@ -13,17 +13,28 @@ class Marco:
         self.polos = 
 
     def run(self):
-        self.broadcaster.sendTransform((0.0, 0.0, 0.0), (0, 0, 0, 1),
-            rospy.Time.now(), "/"+self.robotname+"/odom","/world")
+        self.broadcaster.sendTransform(
+            (0.0, 0.0, 0.0), 
+            (0, 0, 0, 1),
+            rospy.Time.now(), 
+            "/%s/odom"%self.robotname,
+            "/world")
         try:
-           (trans,rot) = self.listener.lookupTransform("/world", "/"+self.robotname+"/base_link", rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+           (trans,rot) = self.listener.lookupTransform(
+            "/world", 
+            "/%s/base_link"%self.robotname, 
+            rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, 
+            tf.ExtrapolationException):
             pass
         self.call_marco()
 
     def call_marco(self):
         for polo_name in self.polo_names:
-            (trans,rot) = self.listener.lookupTransform("/"+self.robotname+"/odom", "/"+polo_name+"/base_link",) rospy.Time(0))
+            (trans,rot) = self.listener.lookupTransform(
+                "/%s/odom"%self.robotname, 
+                "/%s/base_link"%polo_name,
+                 rospy.Time(0))
             radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
             #if radius <
             angular = 4 * math.atan2(trans[1], trans[0])
@@ -37,20 +48,30 @@ class Polo:
         self.broadcaster = tf.TransformBroadcaster()
 
     def run(self):
-        self.broadcaster.sendTransform((0.33655, 0.0, 0.0), (0, 0, 0, 1),
-            rospy.Time.now(), "/"+self.robotname+"/odom","/world")
+        self.broadcaster.sendTransform(
+            (0.33655, 0.0, 0.0), 
+            (0, 0, 0, 1),
+            rospy.Time.now(), 
+            "/%s/odom"%self.robotname,
+            "/world")
         try:
-           (trans,rot) = self.listener.lookupTransform("/world", "/"+self.robotname+"/base_link", rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+           (trans,rot) = self.listener.lookupTransform(
+            "/world", 
+            "/%s/base_link"%self.robotname, 
+            rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, 
+            tf.ExtrapolationException):
             pass
 
 if __name__ == '__main__':
     rospy.init_node('marco_polo_robots')
 
-    polo_names = ["polo1", "polo2"]
+    # polo_names = ["polo1", "polo2"]
+    polo_names = ["polo"]
     marco = Marco(polo_names)
-    polo = Polo("polo")
+    polos = [Polo(name) for name in polo_names]
 
     while not rospy.is_shutdown():
         marco.run()
-        polo.run()
+        for polo in polos:
+            polo.run()
