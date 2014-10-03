@@ -68,7 +68,7 @@ class Polo:
             pass
 
 if __name__ == '__main__':
-    rospy.init_node('marco_polo_bots')
+    rospy.init_node('marco_polo', anonymous=True)
 
     # polo_names = ["polo1", "polo2"]
     polo_names = ["polo"]

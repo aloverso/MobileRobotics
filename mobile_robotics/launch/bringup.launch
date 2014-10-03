@@ -2,7 +2,7 @@
   <arg name="use_sim_time" value="false"/>
   <arg name="host"/>
   <arg name="robotname" default=""/>
-  <include file="$(find neato_node)/launch/bringup_minimal.launch">
+  <include file="$(find mobile_robotics)/launch/bringup_minimal.launch">
 	<arg name="host" value="$(arg host)"/>
 	<arg name="robotname" value="$(arg robotname)"/>
   </include>
