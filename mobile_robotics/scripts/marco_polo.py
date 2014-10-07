@@ -75,6 +75,21 @@ class Marco(Robot):
 class Polo(Robot):
     def __init__(self, robotname):
         Robot.__init__(self,robotname)
+
+    def get_force(self):
+        # Boundry vector
+        boundry_size = 10 #meters
+        try:
+            (trans,rot) = self.listener.lookupTransform(
+                "/%s/base_link"%self.robotname, 
+                "/world",
+                 rospy.Time(0))
+            dist = (trans[0]**2 + trans[1]^2)**0.5
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+        b_weight = (boundry_size - dist)**2
+        b_dir = 
         
     def run(self):
         Robot.run(self)
