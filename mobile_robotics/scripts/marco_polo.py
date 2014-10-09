@@ -35,12 +35,20 @@ class Robot:
         msg = Twist (Vector3 (x, 0, 0), Vector3 (0, 0, a))
         self.pub.publish (msg)
 
+    def __eq__(self, other):
+        if self.robotname == other.robotname:
+            return True
+        else:
+            return False
+
 class Marco(Robot):
-    def __init__(self, polo_names):
-        Robot.__init__(self, "marco")
-        self.polo_names = polo_names
+    def __init__(self, robotname):
+        Robot.__init__(self, robotname)
+        self.polos = []
         self.last_call_time = rospy.get_time()
         self.startup_time = rospy.get_time()
+        switch_states = False
+        switch_with = None
 
     def run(self):
         Robot.run(self)
@@ -57,7 +65,8 @@ class Marco(Robot):
     def call_marco(self):
         closest_polo_dist = 1000000
         angle_to_polo = 0
-        for polo_name in self.polo_names:
+        for polo in self.polos:
+            polo_name = polo.robotname
             try:
                 (trans,rot) = self.listener.lookupTransform(
                     "/%s/base_link"%self.robotname, 
@@ -70,6 +79,26 @@ class Marco(Robot):
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 pass
         return angle_to_polo
+
+    def tagged_polo(self):
+        tagging_radius = 0.5
+        tagged_polo = None
+        for polo in self.polos:
+            polo_name = polo.robotname
+            try:
+                (trans,rot) = self.listener.lookupTransform(
+                    "/%s/base_link"%self.robotname, 
+                    "/%s/base_link"%polo_name,
+                     rospy.Time(0))
+                radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
+                if radius <  tagging_radius:
+                    tagged_polo = polo
+                    break
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                pass
+        if polo:
+            switch_states = True
+            switch_with = polo
 
 # Polo needs to start directly to Marco's right 
 class Polo(Robot):
@@ -111,14 +140,40 @@ class Polo(Robot):
         speed = 0.5/radius # the closer marco is, the faster polo moves
         #Robot.publish_twist_velocity(self, speed, angle_away_from_marco) 
 
+robot_names = [rospy.get_param('~robotname1', ""), rospy.get_param('~robotname2', ""), rospy.get_param('~robotname3', "")] #length at least 2
+robots = []
+polos = []
+
 if __name__ == '__main__':
     rospy.init_node('marco_polo', anonymous=True)
-
+    marco = None
     #polo_names = ["polo1", "polo2"]
-    polo_names = ["polo"]
-    marco = Marco(polo_names)
-    polo = Polo("polo")
+    for i in range(len(robot_names)):
+        if i==0:
+            marco = Marco(robot_names[i])
+            robots.append(marco)
+        else:
+            polo = Polo(robot_names[i])
+            robots.append(polo)
+            polos.append(polo)
 
+    marco.polos = polos
     while not rospy.is_shutdown():
-        marco.run()
-        polo.run()
+        for robot in robots:
+            robot.run()
+            if robot isinstance Marco and robot.switch_states:
+                    switch_states(robot, robot.switch_with)
+    
+def switch_states(ex_marco, ex_polo):
+    for robot in robots:
+        if robot == ex_polo or robot == ex_marco:
+            robots.remove(robot)
+    for polo in polos:
+        if robot == ex_polo:
+            robots.remove(robot)
+    new_polo = Polo(ex_marco.robotname)
+    polos.append(polo)
+    robots.append(polo)
+    new_marco = Marco(ex_polo.robotname)
+    new_marco.polos = polos
+    robots.append(marco)
