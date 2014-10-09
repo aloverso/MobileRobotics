@@ -60,8 +60,9 @@ class Marco(Robot):
             if rospy.get_time() - self.last_call_time >= 5: #call every 5 seconds
                 self.last_call_time = rospy.get_time()
                 angle_to_polo = self.call_marco()
-            #Robot.publish_twist_velocity(self, 0, angle_to_polo)
-            
+            Robot.publish_twist_velocity(self, 0, angle_to_polo)
+            self.check_tagged_polo()
+
     def call_marco(self):
         closest_polo_dist = 1000000
         angle_to_polo = 0
@@ -80,7 +81,7 @@ class Marco(Robot):
                 pass
         return angle_to_polo
 
-    def tagged_polo(self):
+    def check_tagged_polo(self):
         tagging_radius = 0.5
         tagged_polo = None
         for polo in self.polos:
@@ -140,7 +141,7 @@ class Polo(Robot):
         speed = 0.5/radius # the closer marco is, the faster polo moves
         #Robot.publish_twist_velocity(self, speed, angle_away_from_marco) 
 
-robot_names = [rospy.get_param('~robotname1', ""), rospy.get_param('~robotname2', ""), rospy.get_param('~robotname3', "")] #length at least 2
+robot_names = ["robot1", "robot2", "robot3"] #length at least 2
 robots = []
 polos = []
 
@@ -162,15 +163,15 @@ if __name__ == '__main__':
         for robot in robots:
             robot.run()
             if robot isinstance Marco and robot.switch_states:
-                    switch_states(robot, robot.switch_with)
+                switch_states(robot, robot.switch_with)
     
 def switch_states(ex_marco, ex_polo):
     for robot in robots:
         if robot == ex_polo or robot == ex_marco:
             robots.remove(robot)
     for polo in polos:
-        if robot == ex_polo:
-            robots.remove(robot)
+        if polo == ex_polo:
+            polos.remove(polo)
     new_polo = Polo(ex_marco.robotname)
     polos.append(polo)
     robots.append(polo)
