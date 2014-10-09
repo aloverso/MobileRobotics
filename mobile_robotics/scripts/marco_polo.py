@@ -47,8 +47,8 @@ class Marco(Robot):
         self.polos = []
         self.last_call_time = rospy.get_time()
         self.startup_time = rospy.get_time()
-        switch_states = False
-        switch_with = None
+        self.switch_states = False
+        self.switch_with = None
 
     def run(self):
         Robot.run(self)
@@ -98,8 +98,8 @@ class Marco(Robot):
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 pass
         if polo:
-            switch_states = True
-            switch_with = polo
+            self.switch_states = True
+            self.switch_with = polo
 
 # Polo needs to start directly to Marco's right 
 class Polo(Robot):
@@ -119,7 +119,7 @@ class Polo(Robot):
             pass
 
         b_weight = (boundry_size - dist)**2
-        b_dir = 
+        #b_dir = 
         
     def run(self):
         Robot.run(self)
@@ -139,11 +139,28 @@ class Polo(Robot):
         coef = (1 if angular > 0 else -1)
         angle_away_from_marco = angular + 3.14159*coef # 180 degrees away from where it sense marco
         speed = 0.5/radius # the closer marco is, the faster polo moves
-        #Robot.publish_twist_velocity(self, speed, angle_away_from_marco) 
+        Robot.publish_twist_velocity(self, speed, angle_away_from_marco) 
 
 robot_names = ["robot1", "robot2", "robot3"] #length at least 2
 robots = []
 polos = []
+
+def switch_roles(ex_marco, ex_polo):
+    print "switching"
+    ex_marco_name = ex_marco.robotname
+    ex_polo_name = ex_polo.robotname
+    for robot in robots:
+        if robot == ex_polo or robot == ex_marco:
+            robots.remove(robot)
+    for polo in polos:
+        if polo == ex_polo:
+            polos.remove(polo)
+    new_polo = Polo(ex_marco_name)
+    polos.append(polo)
+    robots.append(polo)
+    new_marco = Marco(ex_polo_name)
+    new_marco.polos = polos
+    robots.append(marco)
 
 if __name__ == '__main__':
     rospy.init_node('marco_polo', anonymous=True)
@@ -162,19 +179,5 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         for robot in robots:
             robot.run()
-            if robot isinstance Marco and robot.switch_states:
-                switch_states(robot, robot.switch_with)
-    
-def switch_states(ex_marco, ex_polo):
-    for robot in robots:
-        if robot == ex_polo or robot == ex_marco:
-            robots.remove(robot)
-    for polo in polos:
-        if polo == ex_polo:
-            polos.remove(polo)
-    new_polo = Polo(ex_marco.robotname)
-    polos.append(polo)
-    robots.append(polo)
-    new_marco = Marco(ex_polo.robotname)
-    new_marco.polos = polos
-    robots.append(marco)
+            if isinstance(robot,Marco) and robot.switch_states:
+                switch_roles(robot, robot.switch_with)
