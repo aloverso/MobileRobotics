@@ -85,12 +85,32 @@ class Polo(Robot):
                 "/world",
                  rospy.Time(0))
             dist = (trans[0]**2 + trans[1]^2)**0.5
+            angl = math.atan2(trans[1],trans[0])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
 
-        b_weight = (boundry_size - dist)**2
-        b_dir = 
-        
+        b_weight = 1.0*(dist)**2 # gets higher towards boundry
+        b_dir = angl
+
+        # marco vector
+        try:
+            (trans, rot) = self.listener.lookupTransform(
+                "/%s/base_link"%self.robotname,
+                "/marco/base_link",
+                rospy.Time(0))
+            dist = (trans[0]**2 + trans[1]^2)**0.5
+            angl = math.atan2(trans[1],trans[0])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+        m_weight = 1.0*dist
+        m_dir = angl 
+
+        # add vectors
+        t_x = b_weight*math.cos(b_dir)+m_weight*math.cos(m_dir)
+        t_y = b_weight*math.sin(b_dir)+m_weight*math.sin(m_dir)
+
+
     def run(self):
         Robot.run(self)
         # find where marco is relative to self
