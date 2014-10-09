@@ -4,24 +4,28 @@ import rospy
 import math
 import tf
 import geometry_msgs.msg
-from std_msgs.msg import String
-from geometry_msgs.msg import Twist, Vector3
+from std_msgs.msg import String, Header
+from geometry_msgs.msg import Twist, Vector3, PoseStamped, Pose, Point, Quaternion
 
 class Robot:
-    def __init__(self,robotname):
+    def __init__(self,robotname,origin_transform):
         self.robotname = robotname
         self.listener = tf.TransformListener()
         self.broadcaster = tf.TransformBroadcaster()
         self.pub = rospy.Publisher("/%s/cmd_vel"%self.robotname, Twist, queue_size=10)
+        self.pose_publisher = rospy.Publisher("/%s/posestamped"%self.robotname, PoseStamped, queue_size=10)
+        self.origin_transform = origin_transform
 
     def run(self):
-        #print "running"
+        print self.robotname + str(self.origin_transform)
         self.broadcaster.sendTransform(
-            (0.33655, 0.0, 0.0), 
+            (0.0, self.origin_transform, 0.0), 
             (0, 0, 0, 1),
             rospy.Time.now(), 
             "/%s/odom"%self.robotname,
             "/world")
+        trans = (0,0,0)
+        rot = (0,0,0,1)
         try:
            (trans,rot) = self.listener.lookupTransform(
             "/world", 
@@ -29,7 +33,10 @@ class Robot:
             rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, 
             tf.ExtrapolationException):
+            print ":("
             pass
+        msg = PoseStamped(header=Header(stamp=rospy.Time.now(), frame_id="world"), pose=Pose(position=Point(x=trans[0],y=trans[1],z=trans[2]), orientation=Quaternion(x=rot[0],y=rot[1],z=rot[2],w=rot[3])))
+        self.pose_publisher.publish(msg)
 
     def publish_twist_velocity (self,x,a):
         msg = Twist (Vector3 (x, 0, 0), Vector3 (0, 0, a))
@@ -42,8 +49,8 @@ class Robot:
             return False
 
 class Marco(Robot):
-    def __init__(self, robotname):
-        Robot.__init__(self, robotname)
+    def __init__(self, robotname, origin_transform):
+        Robot.__init__(self, robotname, origin_transform)
         self.polos = []
         self.last_call_time = rospy.get_time()
         self.startup_time = rospy.get_time()
@@ -51,6 +58,7 @@ class Marco(Robot):
         self.switch_with = None
 
     def run(self):
+        print self.robotname + " marco running"
         Robot.run(self)
         if (rospy.get_time() - self.startup_time >= 5):
             angle_to_polo = 0
@@ -60,8 +68,8 @@ class Marco(Robot):
             if rospy.get_time() - self.last_call_time >= 5: #call every 5 seconds
                 self.last_call_time = rospy.get_time()
                 angle_to_polo = self.call_marco()
-            Robot.publish_twist_velocity(self, 0, angle_to_polo)
-            self.check_tagged_polo()
+            #Robot.publish_twist_velocity(self, 0, angle_to_polo)
+            #self.check_tagged_polo()
 
     def call_marco(self):
         closest_polo_dist = 1000000
@@ -103,36 +111,43 @@ class Marco(Robot):
 
 # Polo needs to start directly to Marco's right 
 class Polo(Robot):
-    def __init__(self, robotname):
-        Robot.__init__(self,robotname)
+    def __init__(self, robotname, origin_transform):
+        Robot.__init__(self,robotname, origin_transform)
 
     def get_force(self):
         # Boundry vector
-        boundry_size = 10 #meters
+        boundry_size = 2 #meters
+        dist = 0
+        angl = 0
         try:
             (trans,rot) = self.listener.lookupTransform(
                 "/%s/base_link"%self.robotname, 
                 "/world",
                  rospy.Time(0))
-            dist = (trans[0]**2 + trans[1]^2)**0.5
+            dist = (trans[0]**2 + trans[1]**2)**0.5
             angl = math.atan2(trans[1],trans[0])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
 
-        b_weight = 1.0*(dist)**2 # gets higher towards boundry
+        #print "dist from center " + str(dist)
+        b_weight = 1.0*(dist) # gets higher towards boundry
         b_dir = angl
 
+        dist = 0
+        angl = 0
         # marco vector
         try:
             (trans, rot) = self.listener.lookupTransform(
                 "/%s/base_link"%self.robotname,
                 "/marco/base_link",
                 rospy.Time(0))
-            dist = (trans[0]**2 + trans[1]^2)**0.5
+            dist = (trans[0]**2 + trans[1]**2)**0.5
             angl = math.atan2(trans[1],trans[0])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            #print "no marco :("
             pass
 
+        #print "dist from marco " + str(dist)
         m_weight = 1.0*dist
         m_dir = angl 
 
@@ -144,6 +159,7 @@ class Polo(Robot):
         
 
     def run(self):
+        print self.robotname + " polo running"
         Robot.run(self)
         
         x,y = self.get_force()
@@ -151,16 +167,16 @@ class Polo(Robot):
         tran = 0
         angl = 0
         if y > 0:
-            tran = 1
+            tran = 0.5
         if x >=0:
-            angl = 1
-        else:
             angl = -1
+        else:
+            angl = 1
 
-        self.pub.publish
-        Robot.publish_twist_velocity(self, tran, angl) 
+        #self.pub.publish
+        #Robot.publish_twist_velocity(self, tran, angl) 
 
-robot_names = ["robot1", "robot2", "robot3"] #length at least 2
+robot_name_transforms = {"robot1":0, "robot2":0.33, "robot3":-0.33} #length at least 2
 robots = []
 polos = []
 
@@ -185,12 +201,12 @@ if __name__ == '__main__':
     rospy.init_node('marco_polo', anonymous=True)
     marco = None
     #polo_names = ["polo1", "polo2"]
-    for i in range(len(robot_names)):
-        if i==0:
-            marco = Marco(robot_names[i])
+    for robot_name in robot_name_transforms:
+        if robot_name=="robot1":
+            marco = Marco(robot_name, robot_name_transforms[robot_name])
             robots.append(marco)
         else:
-            polo = Polo(robot_names[i])
+            polo = Polo(robot_name, robot_name_transforms[robot_name])
             robots.append(polo)
             polos.append(polo)
 
