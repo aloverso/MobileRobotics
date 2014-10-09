@@ -1,11 +1,32 @@
 <launch>
   <arg name="use_sim_time" value="false"/>
-  <arg name="host"/>
-  <arg name="robotname"/>
-  <group ns="$(arg robotname)">
-    <include file="$(find mobile_robotics)/launch/bringup.launch">
-	<arg name="host" value="$(arg host)"/>
-	<arg name="robotname" value="$(arg robotname)"/>
+  <arg name="host1"/>
+  <arg name="robotname1"/>
+  <arg name="host2"/>
+  <arg name="robotname2"/>
+  <arg name="host3"/>
+  <arg name="robotname3"/>
+  <group ns="$(arg robotname1)">
+    <include file="$(find mobile_robotocs)/launch/bringup.launch">
+	<arg name="host" value="$(arg host1)"/>
+	<arg name="robotname" value="$(arg robotname1)"/>
     </include>
   </group>
+  <group ns="$(arg robotname2)">
+    <include file="$(find mobile_robotocs)/launch/bringup.launch">
+	<arg name="host" value="$(arg host2)"/>
+	<arg name="robotname" value="$(arg robotname2)"/>
+    </include>
+  </group>
+  <group ns="$(arg robotname3)">
+    <include file="$(find mobile_robotocs)/launch/bringup.launch">
+	<arg name="host" value="$(arg host3)"/>
+	<arg name="robotname" value="$(arg robotname3)"/>
+    </include>
+  </group>
+  <node name="marco_polo" pkg="mobile_robotics" type="marco_polo.py" output="screen">
+    <param name="robotname1" value="$(arg robotname1)"/>
+    <param name="robotname2" value="$(arg robotname2)"/>
+    <param name="robotname3" value="$(arg robotname3)"/>
+  </node>
 </launch>
