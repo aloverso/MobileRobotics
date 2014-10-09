@@ -115,31 +115,50 @@ class Polo(Robot):
                 "/world",
                  rospy.Time(0))
             dist = (trans[0]**2 + trans[1]^2)**0.5
+            angl = math.atan2(trans[1],trans[0])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
 
-        b_weight = (boundry_size - dist)**2
-        #b_dir = 
-        
-    def run(self):
-        Robot.run(self)
-        # find where marco is relative to self
-        angular = 0
-        radius = 1
+        b_weight = 1.0*(dist)**2 # gets higher towards boundry
+        b_dir = angl
+
+        # marco vector
         try:
-            (trans,rot) = self.listener.lookupTransform(
-                "/%s/base_link"%self.robotname, 
+            (trans, rot) = self.listener.lookupTransform(
+                "/%s/base_link"%self.robotname,
                 "/marco/base_link",
-                 rospy.Time(0))
-            print tf.transformations.euler_from_quaternion(rot)
-            #radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
-            angular = math.atan2(trans[1], trans[0])
+                rospy.Time(0))
+            dist = (trans[0]**2 + trans[1]^2)**0.5
+            angl = math.atan2(trans[1],trans[0])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
-        coef = (1 if angular > 0 else -1)
-        angle_away_from_marco = angular + 3.14159*coef # 180 degrees away from where it sense marco
-        speed = 0.5/radius # the closer marco is, the faster polo moves
-        Robot.publish_twist_velocity(self, speed, angle_away_from_marco) 
+
+        m_weight = 1.0*dist
+        m_dir = angl 
+
+        # add vectors
+        t_x = b_weight*math.cos(b_dir)+m_weight*math.cos(m_dir)
+        t_y = b_weight*math.sin(b_dir)+m_weight*math.sin(m_dir)
+
+        return t_x,t_y
+        
+
+    def run(self):
+        Robot.run(self)
+        
+        x,y = self.get_force()
+        # Move based on force:
+        tran = 0
+        angl = 0
+        if y > 0:
+            tran = 1
+        if x >=0:
+            angl = 1
+        else:
+            angl = -1
+
+        self.pub.publish
+        Robot.publish_twist_velocity(self, tran, angl) 
 
 robot_names = ["robot1", "robot2", "robot3"] #length at least 2
 robots = []
