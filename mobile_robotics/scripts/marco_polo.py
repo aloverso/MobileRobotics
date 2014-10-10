@@ -128,11 +128,8 @@ class Polo(Robot):
             angl = math.atan2(trans[1],trans[0])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
-
-        #print "dist from center " + str(dist)
-        b_weight = 1.0*(dist) # gets higher towards boundry
+        b_weight = dist**4/boundry_size**4
         b_dir = angl
-
         dist = 0
         angl = 0
         # marco vector
@@ -146,39 +143,36 @@ class Polo(Robot):
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             #print "no marco :("
             pass
-
-        #print "dist from marco " + str(dist)
-        m_weight = 1.0*dist
+        m_weight = (-dist + 2*boundry_size)/(4*boundry_size)
         m_dir = angl 
 
         # add vectors
-        t_x = b_weight*math.cos(b_dir)+m_weight*math.cos(m_dir)
-        t_y = b_weight*math.sin(b_dir)+m_weight*math.sin(m_dir)
+        sum_x = b_weight*math.cos(b_dir)+m_weight*math.cos(m_dir)
+        sum_y = b_weight*math.sin(b_dir)+m_weight*math.sin(m_dir)
 
-        return t_x,t_y
+        return sum_x,sum_y
         
 
     def run(self):
         print self.robotname + " polo running"
-        Robot.run(self)
-        
+        Robot.run(self)       
         x,y = self.get_force()
         # Move based on force:
         tran = 0
         angl = 0
         if y > 0:
-            tran = 0.5
+            tran = max(y*2,0.2)
         if x >=0:
-            angl = -1
+            angl = -max(x*2,0.2)
         else:
-            angl = 1
+            angl = max(x*2,0.2)
+        self.publish_twist_velocity(self, tran, angl) 
 
-        #self.pub.publish
-        #Robot.publish_twist_velocity(self, tran, angl) 
 
 robot_name_transforms = {"robot1":0, "robot2":0.33, "robot3":-0.33} #length at least 2
 robots = []
 polos = []
+
 
 def switch_roles(ex_marco, ex_polo):
     print "switching"
