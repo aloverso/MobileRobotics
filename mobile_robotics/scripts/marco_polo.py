@@ -6,6 +6,7 @@ import tf
 import geometry_msgs.msg
 from std_msgs.msg import String, Header
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Pose, Point, Quaternion
+from tf.transformations import euler_from_quaternion
 
 class Robot:
     def __init__(self,robotname,origin_transform):
@@ -39,19 +40,7 @@ class Robot:
             "/%s/odom"%self.robotname,
             "/world")
         (trans,rot) = self.get_transform("/world","/%s/base_link"%self.robotname)
-        '''
-        trans = (0,0,0)
-        rot = (0,0,0,1)
-        try:
-           (trans,rot) = self.listener.lookupTransform(
-            "/world", 
-            "/%s/base_link"%self.robotname, 
-            rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, 
-            tf.ExtrapolationException):
-            print ":( my world baselink tf"
-            pass
-            '''
+
         msg = PoseStamped(header=Header(stamp=rospy.Time.now(), frame_id="world"), pose=Pose(position=Point(x=trans[0],y=trans[1],z=trans[2]), orientation=Quaternion(x=rot[0],y=rot[1],z=rot[2],w=rot[3])))
         self.pose_publisher.publish(msg)
 
@@ -73,51 +62,50 @@ class Marco(Robot):
         self.startup_time = rospy.get_time()
         self.switch_states = False
         self.switch_with = None
-        self.
+        self.goal = (0,0,0)
 
     def run(self):
         #print self.robotname + " marco running"
         Robot.run(self)
         if (rospy.get_time() - self.startup_time >= 5):
-            angle_to_polo = 0
-            #print rospy.get_time()
-            #rospy.Timer(rospy.Duration(5), my_callback)
-            #print now.secs
             if rospy.get_time() - self.last_call_time >= 5: #call every 5 seconds
                 self.last_call_time = rospy.get_time() 
-                angle_to_polo = self.call_marco()
-                print angle_to_polo
-            Robot.publish_twist_velocity(self, 0.2, 0.2*angle_to_polo)
+                self.call_marco()
+                #print angle_to_polo
+
+            #angle_to_polo = math.atan2(self.goal[1], self.goal[0])
+            (trans,rot) = Robot.get_transform(self, "/%s/odom"%self.robotname, "/%s/base_link"%self.robotname)
+            dx = self.goal[0] - trans[0]
+            dy = self.goal[1] - trans[1]
+            angles = euler_from_quaternion(rot)
+            #print angles[2]
+            angle_to_goal = math.atan2(dy,dx) + angles[2]
+            print angle_to_goal*180/3.14
+            #print 'rotation: ',[(180.0/math.pi)*i for i in angles]
+            Robot.publish_twist_velocity(self, 0.2, 0.2*angle_to_goal)
             #self.check_tagged_polo()
 
     def call_marco(self):
         closest_polo_dist = 1000000
-        angle_to_polo = 0
+        #angle_to_polo = 0
+        closest_poloname = None
         for polo in self.polos:
             polo_name = polo.robotname
-            (trans,rot) = Robot.get_transform(self, "/%s/base_link"%self.robotname, "%s/base_link"%polo_name)
+            (trans,rot) = Robot.get_transform(self, "/%s/base_link"%self.robotname, "/%s/base_link"%polo_name)
             radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
            # print radius
-            angular = math.atan2(trans[1], trans[0])
+           # angular = math.atan2(trans[1], trans[0])
             #print angular
             if radius < closest_polo_dist:
-                radius = closest_polo_dist
-                angle_to_polo = angular
-            '''
-            try:
-                (trans,rot) = self.listener.lookupTransform(
-                    "/%s/base_link"%self.robotname, 
-                    "/%s/base_link"%polo_name,
-                     rospy.Time(0))
-                radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
-                angular = math.atan2(trans[1], trans[0])
-                if radius < closest_polo_dist:
-                    angle_to_polo = angular
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                print "D: tf b/w marco and polo call"
-                pass
-                '''
-        return angle_to_polo
+                closest_polo_dist = radius
+                #angle_to_polo = angular
+                closest_poloname = polo_name
+            #return angle_to_polo
+            self.update_goal(closest_poloname)
+
+    def update_goal(self, closest_poloname):
+        (trans,rot)= Robot.get_transform(self, "/%s/odom"%self.robotname, "/%s/base_link"%closest_poloname)
+        self.goal = trans
 
     def check_tagged_polo(self):
         tagging_radius = 0.5
@@ -129,20 +117,7 @@ class Marco(Robot):
             if radius <  tagging_radius:
                 tagged_polo = polo
                 break
-            '''
-            try:
-                (trans,rot) = self.listener.lookupTransform(
-                    "/%s/base_link"%self.robotname, 
-                    "/%s/base_link"%polo_name,
-                     rospy.Time(0))
-                radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
-                if radius <  tagging_radius:
-                    tagged_polo = polo
-                    break
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                print "-_- check tagged polo"
-                pass
-                '''
+           
         if polo:
             self.switch_states = True
             self.switch_with = polo
@@ -161,18 +136,7 @@ class Polo(Robot):
         (trans,rot) = Robot.get_transform(self, "/%s/base_link"%self.robotname, "/world")
         dist = (trans[0]**2 + trans[1]**2)**0.5
         angl = math.atan2(trans[1],trans[0])
-        '''
-        try:
-            (trans,rot) = self.listener.lookupTransform(
-                "/world",
-                "/%s/base_link"%self.robotname, 
-                 rospy.Time(0))
-            dist = (trans[0]**2 + trans[1]**2)**0.5
-            angl = math.atan2(trans[1],trans[0])
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            print ":S polo get force"
-            pass
-            '''
+        
         b_weight = dist**4/boundry_size**4
         b_dir = angl
         dist = 0
@@ -181,18 +145,7 @@ class Polo(Robot):
         (trans,rot) = Robot.get_transform(self, "/%s/base_link"%self.robotname, "/%s/base_link"%self.marco.robotname)
         dist = (trans[0]**2 + trans[1]**2)**0.5
         angl = math.atan2(trans[1],trans[0])
-        '''
-        try:
-            (trans, rot) = self.listener.lookupTransform(
-                "/%s/base_link"%self.robotname,
-                "/%s/base_link"%self.marco.robotname,
-                rospy.Time(0))
-            dist = (trans[0]**2 + trans[1]**2)**0.5
-            angl = math.atan2(trans[1],trans[0])
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            print "no marco :|"
-            pass
-            '''
+        
         m_weight = (-dist + 2*boundry_size)/(4*boundry_size)
         m_dir = angl 
 
