@@ -57,7 +57,7 @@ class Robot:
 
     def publish_twist_velocity (self,x,a):
         msg = Twist (Vector3 (x, 0, 0), Vector3 (0, 0, a))
-        self.pub.publish (msg)
+        #self.pub.publish (msg)
 
     def __eq__(self, other):
         if self.robotname == other.robotname:
@@ -73,9 +73,10 @@ class Marco(Robot):
         self.startup_time = rospy.get_time()
         self.switch_states = False
         self.switch_with = None
+        self.
 
     def run(self):
-        print self.robotname + " marco running"
+        #print self.robotname + " marco running"
         Robot.run(self)
         if (rospy.get_time() - self.startup_time >= 5):
             angle_to_polo = 0
@@ -85,7 +86,7 @@ class Marco(Robot):
             if rospy.get_time() - self.last_call_time >= 5: #call every 5 seconds
                 self.last_call_time = rospy.get_time() 
                 angle_to_polo = self.call_marco()
-            print angle_to_polo
+                print angle_to_polo
             Robot.publish_twist_velocity(self, 0.2, 0.2*angle_to_polo)
             #self.check_tagged_polo()
 
@@ -96,7 +97,9 @@ class Marco(Robot):
             polo_name = polo.robotname
             (trans,rot) = Robot.get_transform(self, "/%s/base_link"%self.robotname, "%s/base_link"%polo_name)
             radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
+           # print radius
             angular = math.atan2(trans[1], trans[0])
+            #print angular
             if radius < closest_polo_dist:
                 radius = closest_polo_dist
                 angle_to_polo = angular
@@ -201,7 +204,7 @@ class Polo(Robot):
         
 
     def run(self):
-        print self.robotname + " polo running"
+       # print self.robotname + " polo running"
         Robot.run(self)       
         x,y = self.get_force()
         # Move based on force:
@@ -222,7 +225,7 @@ polos = []
 
 
 def switch_roles(ex_marco, ex_polo):
-    print "switching"
+    #print "switching"
     ex_marco_name = ex_marco.robotname
     ex_polo_name = ex_polo.robotname
     for robot in robots:
