@@ -1,6 +1,5 @@
 #Robot Marco Polo
-Kaitlin Gallagher
-Anne LoVerso
+Kaitlin Gallagher, Anne LoVerso
 
 ##Description:
 Make a three-robot modified marco polo game. One robot, Marco, is tasked with chasing other two, the Polos, without receiving its own position information and with only sporadic access to Polos’ information. Polos are restricted to a field and have access to their own location as well as knowing where Marco is. 
@@ -34,7 +33,7 @@ We used tf to broadcast a transform between any given robot and a “world” fr
 
 Figure 1 shows the tf frames view of the coordinate frame structure. Each robot is connected to the overall world frame. Because of this, we can use tf in our code to request transforms between, the base_links of two robots, and tf is able to calculate that for us.
 
-![Figure 1](frames.png)
+![Figure 1](/view_frames.png)
 Fig 1. Tree of tf frames produced by running rosrun tf view_frames.
 
 ##Design Decision
