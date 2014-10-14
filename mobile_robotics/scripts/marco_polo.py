@@ -80,20 +80,22 @@ class Marco(Robot):
             if angle_to_goal>math.pi:
                 angle_to_goal-=2*math.pi
             print angle_to_goal*180/3.14
+            linear = 2
             '''
             polo = self.call_marco()
             (trans,rot) = Robot.get_transform(self, 
                 "/%s/base_link"%self.robotname, 
                 "/%s/base_link"%polo)
-            angle = 4*math.atan2(trans[1],trans[0])
+            angle = 0.5*math.atan2(trans[1],trans[0])
             linear = 0.5*math.sqrt(trans[0]**2 + trans[1]**2)
+            
             Robot.publish_twist_velocity(self, linear, angle)
             #self.check_tagged_polo()
 
     def call_marco(self):
         closest_polo_dist = 1000000
         #angle_to_polo = 0
-        closest_poloname = None
+        closest_poloname = ""
         for polo in self.polos:
             polo_name = polo.robotname
             (trans,rot) = Robot.get_transform(self, 
@@ -103,7 +105,7 @@ class Marco(Robot):
             if radius < closest_polo_dist:
                 closest_polo_dist = radius
                 closest_poloname = polo_name
-            # self.update_goal(closest_poloname)
+            self.update_goal(closest_poloname)
         return closest_poloname
 
     def update_goal(self, closest_poloname):
@@ -169,7 +171,7 @@ class Polo(Robot):
         Robot.run(self)
         if (rospy.get_time() - self.startup_time >= 5):
             x,y = self.get_force()
-            print self.robotname, x,y
+           # print self.robotname, x,y
             # Move based on force:
             tran = 0
             angl = 0
