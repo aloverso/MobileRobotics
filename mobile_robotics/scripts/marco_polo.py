@@ -62,6 +62,7 @@ class Marco(Robot):
         self.switch_states = False
         self.switch_with = None
         self.goal = (0,0,0)
+        print robotname
 
     def run(self):
         Robot.run(self)
@@ -85,10 +86,10 @@ class Marco(Robot):
             (trans,rot) = Robot.get_transform(self, 
                 "/%s/base_link"%self.robotname, 
                 "/%s/base_link"%polo)
-            angle = 4*math.atan2(trans[1],trans[0])
+            angle = math.atan2(trans[1],trans[0])
             linear = 0.5*math.sqrt(trans[0]**2 + trans[1]**2)
             Robot.publish_twist_velocity(self, linear, angle)
-            #self.check_tagged_polo()
+            self.check_tagged_polo()
 
     def call_marco(self):
         closest_polo_dist = 1000000
@@ -118,13 +119,14 @@ class Marco(Robot):
         for polo in self.polos:
             polo_name = polo.robotname
             (trans,rot) = Robot.get_transform(self, 
-                "base_link"%self.robotname, 
+                "/%s/base_link"%self.robotname, 
                 "/%s/base_link"%polo_name)
             radius = math.sqrt(trans[0] ** 2 + trans[1] ** 2)
-            if radius <  tagging_radius:
+            if radius <=  tagging_radius:
                 tagged_polo = polo
                 break
-        if polo:
+        if tagged_polo:
+            print "\nSWITCHING\n at ", radius
             self.switch_states = True
             self.switch_with = polo
 
@@ -169,12 +171,11 @@ class Polo(Robot):
         Robot.run(self)
         if (rospy.get_time() - self.startup_time >= 5):
             x,y = self.get_force()
-            print self.robotname, x,y
             # Move based on force:
             tran = 0
             angl = 0
             if y > 0:
-                tran = max(y*2,0.2)
+                tran = max(y*3,0.2)
             if x >=0:
                 angl = -max(x*3,1)
             else:
@@ -188,19 +189,22 @@ polos = []
 
 
 def switch_roles(ex_marco, ex_polo):
-    #print "switching"
+    # print "switching"
     ex_marco_name = ex_marco.robotname
     ex_polo_name = ex_polo.robotname
     for robot in robots:
         if robot == ex_polo or robot == ex_marco:
-            robots.remove(robot)
+          robots.remove(robot)
     for polo in polos:
         if polo == ex_polo:
             polos.remove(polo)
-    new_polo = Polo(ex_marco_name)
+    # robots.remove(ex_polo)
+    # robots.remove(ex_marco)
+    # polos.remove(ex_polo)
+    new_polo = Polo(ex_marco_name,robot_name_transforms[ex_marco_name])
     polos.append(polo)
     robots.append(polo)
-    new_marco = Marco(ex_polo_name)
+    new_marco = Marco(ex_polo_name,robot_name_transforms[ex_polo_name])
     new_marco.polos = polos
     robots.append(marco)
     for polo in polos:
